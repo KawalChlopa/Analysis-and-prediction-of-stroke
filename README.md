@@ -1,4 +1,4 @@
-# Data-science
+# Analysis and prediction of stroke
 Academy project
 
 ## Overview
