@@ -1,19 +1,12 @@
-import os
 import duckdb as dd
-import json
 from flask import Flask, jsonify, request
-import sys
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.join(BASE_DIR, "persistence"))
-
-import fill_db
+from persistence import db_location
 
 
 app = Flask(__name__)
 
 def connection():
-    path = fill_db.db_location
+    path = db_location.get_location()
     con = dd.connect(path)
     tables = con.execute("SHOW TABLES").fetchall()
     print(tables)
@@ -23,11 +16,19 @@ def connection():
     else:
         print('Connection failed')
     
-@app.route('/all_data', methods=['GET'])
+@app.route('/count/state', methods=['GET'])
 def all_data():
     con = connection()
-    data = con.execute('SELECT * FROM countries').fetchall()
-    return jsonify(data)
+    result = con.execute("""
+        SELECT s.name as State, count(*) as Amount FROM State s
+        JOIN Indicators i ON s.id = i.state_id
+        GROUP BY i.state_id, s.name
+        """)
+    # Get column names from the result
+    columns = [col[0] for col in result.description]
+    # Convert data to list of dictionaries with column names as keys
+    formatted_data = [dict(zip(columns, row)) for row in result.fetchall()]
+    return jsonify(formatted_data)
 
 @app.route('/AgeCategory', methods=['GET'])
 def AgeCategory():
@@ -37,22 +38,17 @@ def AgeCategory():
     age_ids = request.args.get('age_ids')    
     print(age_ids)
     
-    query = "SELECT * FROM Indicators INNER JOIN AgeCategory ON Indicators.age_category_id = AgeCategory.Id"
+    query = """SELECT * FROM Indicators
+     INNER JOIN AgeCategory ON Indicators.age_category_id = AgeCategory.id"""
     
     if age_ids:
          
-        query += (f" WHERE ageCategory.Id IN ({age_ids}) LIMIT 10")
-        
-        print(query)
-        data = con.execute(query).fetchall()
-        print(data)
-        return jsonify(data)
-        
-    else:
-        data = con.execute(query).fetchall()
-        print(data)
-        return jsonify(data)    
-
+        query += (f" WHERE Indicators.age_category_id IN ({age_ids}) LIMIT 10")
+        result = con.execute(query)
+        columns = [col[0] for col in result.description]
+        # Convert data to list of dictionaries with column names as keys
+        formatted_data = [dict(zip(columns, row)) for row in result.fetchall()]
+        return jsonify(formatted_data)
 
     
 @app.route('/CovidPos', methods=['GET'])
@@ -99,7 +95,7 @@ def ECigaretteUsage():
     
     else:
         
-        data = con.execute(quety).fetchall()
+        data = con.execute(query).fetchall()
         print(data)
         return jsonify(data)
     
