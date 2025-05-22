@@ -32,4 +32,11 @@ def RaceEthnicity(con):
                         """)
     return result
 
-
+def State(con):
+    result = con.execute("""SELECT s.name as 'State', SUM(CASE WHEN i.had_stroke = TRUE THEN 1 ELSE 0 END) as 'had stroke', COUNT(*) as total 
+                         FROM Indicators i 
+                         INNER JOIN State s 
+                         ON i.state_id = s.id 
+                         GROUP BY s.name;
+                        """)
+    return result

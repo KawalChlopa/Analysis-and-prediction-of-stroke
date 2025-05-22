@@ -176,6 +176,15 @@ def Total():
 
     return jsonify(formatted_data)
 
+@app.route('/api/State', methods=['GET'])
+def State():
+    con = connection()
+
+    data = demographic.State(con)
+    formatted_data = convert(data)
+
+    return jsonify(formatted_data)
+
 if __name__ == '__main__':
     app.run(debug=True)
     con = connection()
