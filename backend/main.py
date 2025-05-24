@@ -1,13 +1,17 @@
 import duckdb as dd
 from flask import Flask, jsonify, request
+import os
+import sys
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from persistence import db_location
 from . import health_condition
 from . import lifestyle
 from . import demographic
 from . import total
 
+from flask import render_template  # already imported jsonify
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates')
 
 def connection():
     path = db_location.get_location()
@@ -26,11 +30,29 @@ def convert(result):
     return formatted_data
 
 
+@app.route('/')
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/prediction')
+def stroke_prediction():
+    return render_template('stroke-prediction.html')
+
+@app.route('/predict-stroke', methods=['POST'])
+def predict_stroke():
+    data = request.get_json()
+    print("Received data:", data)  # for debugging/logging
+
+    # Simple example logic — replace with model
+    risk = "High Risk" if float(data.get("bmi", 0)) > 30 else "Low Risk"
+    return jsonify({"result": risk})
+
+
 # Demographic
 @app.route('/api/Age', methods=['GET'])
 def get_age():
     con = connection()
-    
+
     data = demographic.Age(con)
     formatted_data = convert(data)
     return jsonify(formatted_data)
@@ -172,6 +194,15 @@ def Total():
     con = connection()
 
     data = total.Total(con)
+    formatted_data = convert(data)
+
+    return jsonify(formatted_data)
+
+@app.route('/api/State', methods=['GET'])
+def State():
+    con = connection()
+
+    data = demographic.State(con)
     formatted_data = convert(data)
 
     return jsonify(formatted_data)
