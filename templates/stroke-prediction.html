@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Stroke Prediction</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+        }
+
+        header {
+            background-color: #00695c;
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        nav {
+            background-color: #ffffff;
+            padding: 1rem 2rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        nav a {
+            margin: 0 1rem;
+            text-decoration: none;
+            color: #00695c;
+            font-weight: bold;
+        }
+
+        .container {
+            padding: 2rem;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem 2rem;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 0.4rem;
+            background-color: #e0f2f1;
+            border: 2px solid #00695c;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+            user-select: none;
+        }
+
+        .toggle-btn.selected {
+            background-color: #00695c;
+            color: white;
+        }
+
+        input[type="number"], select {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        button[type="submit"] {
+            margin-top: 2rem;
+            background-color: #00695c;
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .result-card {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+            border: 1px solid #c8e6c9;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: bold;
+            margin-top: 2rem;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<header>Stroke Prediction</header>
+<nav>
+    <a href="/">Dashboard</a>
+    <a href="/prediction">Stroke Prediction</a>
+</nav>
+<div class="container">
+    <div class="card">
+        <form id="predictionForm">
+
+            <!-- True/False fields -->
+            <div class="form-grid" id="trueFalseFields"></div>
+
+            <!-- Static fields -->
+            <div class="form-grid" id="staticFields">
+                <div class="field-group">
+                    <label>Physical Health Days</label>
+                    <input type="number" name="physical_health_days" required>
+                </div>
+                <div class="field-group">
+                    <label>Mental Health Days</label>
+                    <input type="number" name="mental_health_days" required>
+                </div>
+                <div class="field-group">
+                    <label>Age Category ID</label>
+                    <input type="number" name="age_category_id" required>
+                </div>
+                <div class="field-group">
+                    <label>Tetanus Last 10 TD</label>
+                    <input type="number" name="tetanus_last_10_td" required>
+                </div>
+                <div class="field-group">
+                    <label>Sleep Hours</label>
+                    <input type="number" name="sleep_hours" required>
+                </div>
+                <div class="field-group">
+                    <label>BMI</label>
+                    <input type="number" name="bmi" required>
+                </div>
+                <div class="field-group">
+                    <label>Height in CM</label>
+                    <input type="number" name="height_in_cm" required>
+                </div>
+                <div class="field-group">
+                    <label>Weight in Kilograms</label>
+                    <input type="number" name="weight_in_kilograms" required>
+                </div>
+
+                <!-- Select fields -->
+                <label>general_health_id
+                    <select name="general_health_id">
+                        <option value="5">Fair</option>
+                        <option value="1">Very good</option>
+                        <option value="4">Good</option>
+                        <option value="3">Poor</option>
+                        <option value="2">Excellent</option>
+                    </select>
+                </label>
+
+                <label>had_diabetes_id
+                    <select name="had_diabetes_id">
+                        <option value="1">Yes</option>
+                        <option value="4">Yes, but only during pregnancy (female)</option>
+                        <option value="3">No, pre-diabetes or borderline diabetes</option>
+                        <option value="2">No</option>
+                    </select>
+                </label>
+
+                <label>removedteeth
+                    <select name="removedteeth">
+                        <option value="1">None of them</option>
+                        <option value="2">1 to 5</option>
+                        <option value="3">All</option>
+                        <option value="4">6 or more, but not all</option>
+                    </select>
+                </label>
+
+                <label>smoker_status
+                    <select name="smoker_status">
+                        <option value="2">Former smoker</option>
+                        <option value="1">Never smoked</option>
+                        <option value="3">Current smoker - now smokes every day</option>
+                        <option value="4">Current smoker - now smokes some days</option>
+                    </select>
+                </label>
+
+                <label>ecigarette_usage_id
+                    <select name="ecigarette_usage_id">
+                        <option value="1">Use them some days</option>
+                        <option value="4">Not at all (right now)</option>
+                        <option value="3">Never used e-cigarettes in my entire life</option>
+                        <option value="2">Use them every day</option>
+                    </select>
+                </label>
+
+                <label>race_ethnicity_category_id
+                    <select name="race_ethnicity_category_id">
+                        <option value="1">Other race only, Non-Hispanic</option>
+                        <option value="2">Hispanic</option>
+                        <option value="3">White only, Non-Hispanic</option>
+                        <option value="4">Multiracial, Non-Hispanic</option>
+                        <option value="5">Black only, Non-Hispanic</option>
+                    </select>
+                </label>
+
+                <label>CovidPos
+                    <select name="CovidPos">
+                        <option value="1">Yes</option>
+                        <option value="2">Tested positive using home test without a health professional</option>
+                        <option value="3">No</option>
+                    </select>
+                </label>
+            </div>
+
+            <button type="submit">Predict Stroke Risk</button>
+        </form>
+        <div id="result" class="result-card" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    const fields = [
+        'sex', 'had_heart_attack', 'had_angina', 'had_stroke',
+        'had_asthma', 'had_skin_cancer', 'had_copd', 'had_depressive_disorder',
+        'had_kidney_disease', 'had_arthritis', 'deaf_or_hard_of_hearing',
+        'blind_or_vision_difficulty', 'difficulty_concentrating', 'difficulty_walking',
+        'difficulty_dressing_bathing', 'difficulty_errands', 'chest_scan',
+        'alcohol_drinkers', 'hiv_testing', 'flu_vax_last_12', 'pneumo_vax_ever', 'high_risk_last_year', 'physical_activities'
+    ];
+
+    const trueFalseContainer = document.getElementById('trueFalseFields');
+
+    fields.forEach(field => {
+        const group = document.createElement('div');
+        group.className = 'field-group';
+
+        const label = document.createElement('label');
+        label.textContent = field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+        const toggleGroup = document.createElement('div');
+        toggleGroup.className = 'toggle-group';
+
+        const options = (field === 'sex') ? ['Male', 'Female'] : ['True', 'False'];
+
+        options.forEach(val => {
+            const btn = document.createElement('div');
+            btn.className = 'toggle-btn';
+            btn.textContent = val;
+            btn.dataset.value = (field === 'sex') ? (val === 'Male' ? 'True' : 'False') : val;
+            btn.addEventListener('click', () => {
+                toggleGroup.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                hidden.value = btn.dataset.value;
+            });
+            toggleGroup.appendChild(btn);
+        });
+
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = field;
+        hidden.required = true;
+
+        group.appendChild(label);
+        group.appendChild(toggleGroup);
+        group.appendChild(hidden);
+
+        trueFalseContainer.appendChild(group);
+    });
+
+    const form = document.getElementById('predictionForm');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = {};
+
+        for (const [key, val] of formData.entries()) {
+            data[key] = val;
+        }
+
+        try {
+            const response = await fetch('/predict-stroke', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch prediction result.');
+
+            const resultData = await response.json();
+            result.style.display = 'block';
+            result.innerHTML = `<h3>Prediction Result:</h3><p>${resultData.result || JSON.stringify(resultData)}</p>`;
+        } catch (err) {
+            console.error(err);
+            result.style.display = 'block';
+            result.innerHTML = `<h3>Error:</h3><p>${err.message}</p>`;
+        }
+    });
+</script>
+</body>
+</html>
