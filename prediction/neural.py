@@ -1,35 +1,41 @@
-import pandas as pd
+import duckdb
+import os
+import joblib
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
-import keras
-from sklearn.metrics import accuracy_score, classification_report
+
+cwd = os.getcwd()
+parent_dir = os.path.dirname(cwd)
+db_location = os.path.join(parent_dir, 'persistence', 'stroke-dataset.db')
+model_path = os.path.join(parent_dir, 'persistence', 'random_forest_model.joblib')
+feature_list_path = os.path.join(parent_dir, 'persistence', 'model_features.joblib')
 
 
+conn = duckdb.connect(db_location)
+df = conn.execute("SELECT * FROM Indicators").fetchdf()
+data = df.drop("state_id", axis='columns')
 
-def neural_network(data_file):
-    df = pd.read_csv(data_file)
+headers_to_label = ['sex', 'had_heart_attack', 'had_angina', 'had_stroke',
+ 'had_asthma', 'had_skin_cancer', 'had_copd', 'had_depressive_disorder',
+ 'had_kidney_disease', 'had_arthritis', 'deaf_or_hard_of_hearing',
+ 'blind_or_vision_difficulty', 'difficulty_concentrating', 'difficulty_walking',
+ 'difficulty_dressing_bathing', 'difficulty_errands', 'chest_scan',
+ 'weight_in_kilograms', 'alcohol_drinkers',
+ 'hiv_testing', 'flu_vax_last_12', 'pneumo_vax_ever', 'high_risk_last_year']
 
-    df_0 = df[df["HeartDisease"] == 0].sample(frac=0.5, random_state=42)
-    df_1 = df[df["HeartDisease"] == 1]
-    df = pd.concat([df_0, df_1]).sample(frac=1, random_state=42).reset_index(drop=True)
+label_encoders = {}
+for column in headers_to_label:
+    le = LabelEncoder()
+    data[column] = le.fit_transform(data[column])
+    label_encoders[column] = le
 
-    x = df.drop(columns=["HeartDisease"])
-    y = df["HeartDisease"]
+x = data.drop(columns=['had_heart_attack'])
+y = data['had_heart_attack']
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, train_size=0.8, random_state=42)
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+model = RandomForestClassifier()
+model.fit(xtrain, ytrain)
 
-    model = keras.Sequential([
-        keras.layers.Input(shape=(x_train.shape[1],)),
-        keras.layers.Dense(32, activation='relu'),
-        keras.layers.Dense(16, activation='relu'),
-        keras.layers.Dense(1, activation='sigmoid')
-    ])
-
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-    model.fit(x_train, y_train, epochs=20, batch_size=32, validation_data=(x_test, y_test), verbose=1)
-
-
-    model.save("heart_disease_model.keras")
-
-
-neural_network('test3.csv')
+joblib.dump(model, model_path)
+joblib.dump(list(x.columns), feature_list_path)
