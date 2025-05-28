@@ -5,9 +5,36 @@ from . import health_condition
 from . import lifestyle
 from . import demographic
 from . import total
+from . import diseases
 
 
 app = Flask(__name__)
+
+endpoint_map = {
+    # Demographic
+    'Age': demographic.Age,
+    'Sex': demographic.Sex,
+    'RaceEthnicity': demographic.RaceEthnicity,
+    'State': demographic.State,
+    # Lifestyle
+    'Smokers': lifestyle.Smokers,
+    'Sleep': lifestyle.Sleep,
+    'BMI': lifestyle.BMI,
+    'GeneralHealth': lifestyle.GeneralHealth,
+    # Health Conditions
+    'Asthma': health_condition.Asthma,
+    'KidneyDisease': health_condition.KidneyDisease,
+    'SkinCancer': health_condition.SkinCancer,
+    'Angina': health_condition.Angina,
+    'Covid_Pos': health_condition.Covid_Pos,
+    'HeartDisease': health_condition.HeartDiesiese,
+    'Stroke': health_condition.Stroke,
+    # Total
+    'Total': total.Total,
+    # Diseases
+    'Diseases': diseases.diseases
+}
+
 
 def connection():
     path = db_location.get_location()
@@ -19,6 +46,8 @@ def connection():
     else:
         print('Connection failed')
     
+
+
 def convert(result):
     columns = [col[0] for col in result.description]
     formatted_data = [dict(zip(columns, row)) for row in result.fetchall()]
@@ -26,163 +55,22 @@ def convert(result):
     return formatted_data
 
 
-# Demographic
-@app.route('/api/Age', methods=['GET'])
-def get_age():
+@app.route('/api/<endpoint>', methods=['GET'])
+def api(endpoint):
     con = connection()
+    func = endpoint_map.get(endpoint)
+    columns_param = request.args.get('columns')
     
-    data = demographic.Age(con)
+    if func is None:
+        return jsonify({'error': 'Endpoint not found'}), 404
+    
+    if columns_param is not None:
+        columns_params = columns_param.split(',') if columns_param else []
+        data = func(con, columns_params)
+    else:  
+        data = func(con)
+    
     formatted_data = convert(data)
-    return jsonify(formatted_data)
-
-@app.route('/api/Sex', methods=['GET'])
-def Sex():
-    con = connection()
-
-    data = demographic.Sex(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/RaceEthnicity', methods=['GET'])
-def RaceEthnicity():
-    con = connection()
-
-    data = demographic.RaceEthnicity(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-# Lifestyle
-@app.route('/api/Smokers', methods=['GET'])
-def Smokers():
-    con = connection()
-
-    data = lifestyle.Smokers(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/Sleep', methods=['GET'])
-def Sleep():
-    con = connection()
-
-    data = lifestyle.Sleep(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/BMI', methods=['GET'])
-def BMI():
-    con = connection()
-
-    data = lifestyle.BMI(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/GeneralHealth', methods=['GET'])
-def GeneralHealth():
-    con = connection()
-
-    data = lifestyle.GeneralHealth(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)     
-
-# Health Conditions
-@app.route('/api/HealthConditions', methods=['GET'])
-def HealthConditions():
-    con = connection()
-
-    data = health_condition.HealthConditions(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/Asthma', methods=['GET'])
-def Asthma():
-    con = connection()
-
-    data = health_condition.Asthma(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/KidneyDisease', methods=['GET'])
-def KidneyDisease():
-    con = connection()
-
-    data = health_condition.KidneyDisease(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/SkinCancer', methods=['GET'])
-def SkinCancer():
-    con = connection()
-
-    data = health_condition.SkinCancer(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/Angina', methods=['GET'])
-def Angina():
-    con = connection()
-
-    data = health_condition.Angina(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/Covid_Pos', methods=['GET'])
-def Covid_Pos():
-    con = connection()
-
-    data = health_condition.Covid_Pos(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-
-    return jsonify(formatted_data)
-
-@app.route('/api/HeartDisease', methods=['GET'])
-def HeartDisease():
-    con = connection()
-
-    data = health_condition.HeartDisease(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/Stroke', methods=['GET'])
-def Stroke():
-    con = connection()
-
-    data = health_condition.Stroke(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-# Total
-@app.route('/api/Total', methods=['GET'])
-def Total():
-    con = connection()
-
-    data = total.Total(con)
-    formatted_data = convert(data)
-
-    return jsonify(formatted_data)
-
-@app.route('/api/State', methods=['GET'])
-def State():
-    con = connection()
-
-    data = demographic.State(con)
-    formatted_data = convert(data)
-
     return jsonify(formatted_data)
 
 if __name__ == '__main__':
