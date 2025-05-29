@@ -1,8 +1,4 @@
-import duckdb
-import os
-import joblib
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
 import keras
 from sklearn.metrics import classification_report, confusion_matrix
 import seaborn as sns

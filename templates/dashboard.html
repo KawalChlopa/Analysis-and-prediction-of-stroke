@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stroke Analysis Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+        }
+
+        header {
+            background-color: #00695c;
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 300px !important;
+        }
+
+        nav {
+            text-align: center;
+            background-color: #e0f2f1;
+            padding: 1rem;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #00695c;
+            margin: 0 1rem;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #eeeeee;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .chart-description {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.6s ease, padding 0.3s ease;
+            padding: 0 1rem;
+        }
+
+        .chart-description p {
+            color: #444;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+        }
+
+        .card.active .chart-description {
+            max-height: 100px;
+            padding: 0.5rem 1rem;
+        }
+
+
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet-ajax"></script>
+</head>
+<body>
+<header>
+    Stroke Analysis Dashboard
+</header>
+<nav>
+    <a href="/">Dashboard</a>
+    <a href="/prediction">Stroke Prediction</a>
+</nav>
+<div class="container">
+    <div class="card" onclick="toggleDescription(this)">
+        <h3>Age Distribution of Stroke Cases</h3>
+        <canvas id="ageChart"></canvas>
+        <div class="chart-description">
+            <p>This chart shows the number of strokes reported within each age group. It helps visualize how stroke frequency changes with age.</p>
+        </div>
+    </div>
+
+    <div class="card" onclick="toggleDescription(this)">
+        <h3>Stroke Incidence by Sex</h3>
+        <canvas id="sexChart"></canvas>
+        <div class="chart-description">
+            <p>This chart compares stroke cases between male and female respondents.</p>
+        </div>
+    </div>
+
+    <div class="card" onclick="toggleDescription(this)">
+        <h3>Stroke Distribution by Race/Ethnicity</h3>
+        <canvas id="raceChart"></canvas>
+        <div class="chart-description">
+            <p>This chart breaks down stroke cases based on race and ethnicity, highlighting potential health disparities among different groups.</p>
+        </div>
+    </div>
+
+    <div class="card" onclick="toggleDescription(this)">
+        <h3>Smoking Status and Stroke Incidence</h3>
+        <canvas id="smokersChart"></canvas>
+        <div class="chart-description">
+            <p>This chart displays the number of strokes among people with different smoking habits, indicating the impact of smoking on stroke risk.</p>
+        </div>
+    </div>
+
+    <div class="card" onclick="toggleDescription(this)">
+        <h3>General Health vs Stroke Occurrence</h3>
+        <canvas id="healthChart"></canvas>
+        <div class="chart-description">
+            <p>This chart shows how people’s self-reported general health status relates to the likelihood of having a stroke.</p>
+        </div>
+    </div>
+
+    <div class="card" onclick="toggleDescription(this)">
+        <h3>Asthma and Stroke Incidence</h3>
+        <canvas id="asthmaChart"></canvas>
+        <div class="chart-description">
+            <p>This chart explores the relationship between asthma diagnoses and stroke cases.</p>
+        </div>
+    </div>
+
+    <div class="card" onclick="toggleDescription(this)">
+        <h3>Overall Stroke Occurrence</h3>
+        <canvas id="strokeChart"></canvas>
+        <div class="chart-description">
+            <p>This chart summarizes the total number of people who have experienced a stroke compared to those who haven’t.</p>
+        </div>
+    </div>
+</div>
+
+<footer>
+    &copy; 2025 Stroke Insights • Built with Flask, DuckDB, and Chart.js
+</footer>
+
+<script>
+    let selectedState = null;
+
+    async function loadChart(apiUrl, canvasId, labelKey, valueKey) {
+        let url = apiUrl;
+        if (selectedState) url += `?state=${encodeURIComponent(selectedState)}`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const labels = data.map(row => row[labelKey]);
+        const values = data.map(row => row[valueKey]);
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        if (window[canvasId + '_instance']) window[canvasId + '_instance'].destroy();
+
+        window[canvasId + '_instance'] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Count',
+                    data: values,
+                    backgroundColor: 'rgba(0, 150, 136, 0.7)',
+                    borderColor: 'rgba(0, 150, 136, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.parsed.y} people`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function loadAllCharts() {
+        loadChart('/api/Age', 'ageChart', 'Age group', 'had stroke');
+        loadChart('/api/Sex', 'sexChart', 'sex', 'had stroke');
+        loadChart('/api/RaceEthnicity', 'raceChart', 'Race Ethnicty', 'had stroke');
+        loadChart('/api/Smokers', 'smokersChart', 'Smoking Status', 'had stroke');
+        loadChart('/api/GeneralHealth', 'healthChart', 'name', 'had stroke');
+        loadChart('/api/Asthma', 'asthmaChart', 'Had Asthma', 'had stroke');
+        loadChart('/api/Stroke', 'strokeChart', 'Had Stroke', 'total');
+    }
+
+    function toggleDescription(card) {
+        card.classList.toggle("active");
+        if (card.classList.contains("active")) {
+            setTimeout(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
+    }
+
+    async function renderMap() {
+        const response = await fetch('/api/State');
+        const data = await response.json();
+
+        const map = L.map('usMap').setView([37.8, -96], 4);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 6,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Load US states GeoJSON (static file or CDN, assuming served at /static/us-states.json)
+        const geoJsonLayer = new L.GeoJSON.AJAX('/static/us-states.json', {
+            onEachFeature: function (feature, layer) {
+                layer.on('click', function () {
+                    selectedState = feature.properties.name;
+                    loadAllCharts();
+                });
+                layer.bindPopup(feature.properties.name);
+                layer.setStyle({ color: '#00695c', weight: 1, fillOpacity: 0.5 });
+            }
+        });
+        geoJsonLayer.addTo(map);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderMap();
+        loadAllCharts();
+    });
+</script>
+<script>
+    // Function to fetch and update charts based on the selected state
+    async function updateChartsByState(stateAbbr) {
+        // Define the endpoints for each chart, appending the state abbreviation as a query parameter
+        const endpoints = {
+            ageChart: `/api/Age?state=${stateAbbr}`,
+            sexChart: `/api/Sex?state=${stateAbbr}`,
+            raceChart: `/api/RaceEthnicity?state=${stateAbbr}`,
+            smokersChart: `/api/Smokers?state=${stateAbbr}`,
+            healthChart: `/api/GeneralHealth?state=${stateAbbr}`,
+            asthmaChart: `/api/Asthma?state=${stateAbbr}`,
+            strokeChart: `/api/Stroke?state=${stateAbbr}`
+        };
+
+        // Loop through each chart and update it
+        for (const [chartId, url] of Object.entries(endpoints)) {
+            await loadChart(url, chartId, 'label', 'value'); // Adjust 'label' and 'value' keys as per your API response
+        }
+    }
+
+    // Add event listeners to each state path
+    document.querySelectorAll('#us-map path').forEach(path => {
+        path.addEventListener('click', () => {
+            const stateAbbr = path.id;
+            updateChartsByState(stateAbbr);
+        });
+    });
+</script>
+</body>
+</html>

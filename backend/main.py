@@ -6,9 +6,7 @@ from . import lifestyle
 from . import demographic
 from . import total
 from . import diseases
-
-
-app = Flask(__name__)
+from flask import render_template  # already imported jsonify
 
 endpoint_map = {
     # Demographic
@@ -36,6 +34,8 @@ endpoint_map = {
 }
 
 
+app = Flask(__name__, template_folder='../templates')
+
 def connection():
     path = db_location.get_location()
     print(f"Database path: {path}")
@@ -46,8 +46,6 @@ def connection():
     else:
         print('Connection failed')
     
-
-
 def convert(result):
     columns = [col[0] for col in result.description]
     formatted_data = [dict(zip(columns, row)) for row in result.fetchall()]
@@ -60,14 +58,14 @@ def api(endpoint):
     con = connection()
     func = endpoint_map.get(endpoint)
     columns_param = request.args.get('columns')
-    
+
     if func is None:
         return jsonify({'error': 'Endpoint not found'}), 404
-    
+
     if columns_param is not None:
         columns_params = columns_param.split(',') if columns_param else []
         data = func(con, columns_params)
-    else:  
+    else:
         data = func(con)
     
     formatted_data = convert(data)
