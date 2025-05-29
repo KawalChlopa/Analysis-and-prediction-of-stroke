@@ -2,7 +2,7 @@ import duckdb as dd
 from flask import Flask, jsonify, request
 from persistence import db_location
 
-
+# to remove - to many enpoints and too few items, use api/Diseases instead
 def HeartDiesiese(con):
     result = con.execute("""
                         SELECT had_heart_attack as 'Had Heart Attack', SUM(CASE WHEN had_stroke = TRUE THEN 1 ELSE 0 END) as 'had stroke', COUNT(*) as total

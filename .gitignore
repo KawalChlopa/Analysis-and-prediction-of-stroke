@@ -1,4 +1,4 @@
-﻿.idea
+﻿ve  .idea
 # Byte-compiled files
 __pycache__/
 __pycache__
@@ -35,3 +35,5 @@ build/
 *.db
 .db
 venv/
+
+.idea

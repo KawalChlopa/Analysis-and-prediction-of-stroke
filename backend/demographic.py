@@ -4,7 +4,7 @@ from persistence import db_location
 
 
 def Age(con):
-    result = con.execute("""SELECT ac.name as 'Age group', SUM(CASE WHEN i.had_stroke = TRUE THEN 1 ELSE 0 END) as 'had stroke', COUNT(*) as total 
+    result = con.execute("""SELECT ac.name as 'age_group', SUM(CASE WHEN i.had_stroke = TRUE THEN 1 ELSE 0 END) as 'had_stroke', COUNT(*) as total 
                          FROM Indicators i 
                          INNER JOIN AgeCategory ac 
                          ON i.age_category_id = ac.id  
@@ -13,18 +13,17 @@ def Age(con):
     return result
 
 
-
 def Sex(con):
     result = con.execute("""
-                         SELECT sex, SUM(CASE WHEN had_stroke = TRUE THEN 1 ELSE 0 END) as 'had stroke', COUNT(*) as 'total' 
-                         FROM Indicators 
+                         SELECT sex, SUM(CASE WHEN had_stroke = TRUE THEN 1 ELSE 0 END) as 'had_stroke', COUNT(*) as 'total' 
+                         FROM Indicators
                          GROUP BY sex
 """)
     return result
 
 
 def RaceEthnicity(con):
-    result = con.execute("""SELECT re.name as 'Race Ethnicty', SUM(CASE WHEN i.had_stroke = TRUE THEN 1 ELSE 0 END) as 'had stroke', COUNT(*) as total 
+    result = con.execute("""SELECT re.name as 'race_ethnicty', SUM(CASE WHEN i.had_stroke = TRUE THEN 1 ELSE 0 END) as 'had_stroke', COUNT(*) as total 
                          FROM Indicators i 
                          INNER JOIN RaceEthnicityCategory re 
                          ON i.race_ethnicity_category_id = re.id 
@@ -32,8 +31,9 @@ def RaceEthnicity(con):
                         """)
     return result
 
+
 def State(con):
-    result = con.execute("""SELECT s.name as 'State', SUM(CASE WHEN i.had_stroke = TRUE THEN 1 ELSE 0 END) as 'had stroke', COUNT(*) as total 
+    result = con.execute("""SELECT s.name as 'state', SUM(CASE WHEN i.had_stroke = TRUE THEN 1 ELSE 0 END) as 'had_stroke', COUNT(*) as total 
                          FROM Indicators i 
                          INNER JOIN State s 
                          ON i.state_id = s.id 

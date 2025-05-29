@@ -1,11 +1,7 @@
 import duckdb as dd
 from flask import Flask, jsonify, request
 from persistence import db_location
-from . import health_condition
-from . import lifestyle
-from . import demographic
-from . import total
-from . import diseases
+from backend import health_condition, lifestyle, demographic, diseases, total
 from flask import render_template  # already imported jsonify
 
 endpoint_map = {
@@ -30,11 +26,10 @@ endpoint_map = {
     # Total
     'Total': total.Total,
     # Diseases
-    'Diseases': diseases.diseases
+    'Diseases': diseases.chosen_diseases
 }
-
-
 app = Flask(__name__, template_folder='../templates')
+
 
 def connection():
     path = db_location.get_location()
@@ -45,7 +40,8 @@ def connection():
         return con
     else:
         print('Connection failed')
-    
+
+
 def convert(result):
     columns = [col[0] for col in result.description]
     formatted_data = [dict(zip(columns, row)) for row in result.fetchall()]
@@ -62,7 +58,10 @@ def api(endpoint):
     if func is None:
         return jsonify({'error': 'Endpoint not found'}), 404
 
-    if columns_param is not None:
+    if endpoint == 'Diseases':
+        group_param = request.args.get('group_by')
+        data = func(con, columns_param.split(',') if columns_param else [], group_param)
+    elif columns_param is not None:
         columns_params = columns_param.split(',') if columns_param else []
         data = func(con, columns_params)
     else:
@@ -70,6 +69,7 @@ def api(endpoint):
     
     formatted_data = convert(data)
     return jsonify(formatted_data)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
