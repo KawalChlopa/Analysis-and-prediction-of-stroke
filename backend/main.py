@@ -1,32 +1,12 @@
 import duckdb as dd
 from flask import Flask, jsonify, request
 from persistence import db_location
-from backend import health_condition, lifestyle, demographic, diseases, total
+from backend import diseases, total
 from flask import render_template  # already imported jsonify
 
 endpoint_map = {
-    # Demographic
-    'Age': demographic.Age,
-    'Sex': demographic.Sex,
-    'RaceEthnicity': demographic.RaceEthnicity,
-    'State': demographic.State,
-    # Lifestyle
-    'Smokers': lifestyle.Smokers,
-    'Sleep': lifestyle.Sleep,
-    'BMI': lifestyle.BMI,
-    'GeneralHealth': lifestyle.GeneralHealth,
-    # Health Conditions
-    'Asthma': health_condition.Asthma,
-    'KidneyDisease': health_condition.KidneyDisease,
-    'SkinCancer': health_condition.SkinCancer,
-    'Angina': health_condition.Angina,
-    'Covid_Pos': health_condition.Covid_Pos,
-    'HeartDisease': health_condition.HeartDiesiese,
-    'Stroke': health_condition.Stroke,
-    # Total
+     # Total
     'Total': total.Total,
-    # Diseases
-    'Diseases': diseases.chosen_diseases
 }
 app = Flask(__name__, template_folder='../templates')
 
@@ -49,6 +29,34 @@ def convert(result):
     return formatted_data
 
 
+@app.route('/api/Diseases', methods=['GET'])
+def get_diseases_grouped_by():
+    #     check params existence
+    columns_param = request.args.get('columns')
+    group_by_param = request.args.get('group_by')
+    print(group_by_param)
+    if not columns_param:
+        return jsonify({'error': 'Missing required parameter: columns'}), 400
+
+    columns_list = columns_param.split(',')
+    group_by_param = request.args.get('group_by')
+
+    con = connection()
+    if con is None:
+        return jsonify({'error': 'Database connection failed'}), 500
+    try:
+        data = diseases.diseases(con, columns_list, group_by_param)
+        if data is None:
+            return jsonify({'error': 'Query returned no results'}), 404
+
+        formatted_data = convert(data)
+        return jsonify(formatted_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        con.close()
+
+
 @app.route('/api/<endpoint>', methods=['GET'])
 def api(endpoint):
     con = connection()
@@ -58,15 +66,16 @@ def api(endpoint):
     if func is None:
         return jsonify({'error': 'Endpoint not found'}), 404
 
-    if endpoint == 'Diseases':
-        group_param = request.args.get('group_by')
-        data = func(con, columns_param.split(',') if columns_param else [], group_param)
-    elif columns_param is not None:
-        columns_params = columns_param.split(',') if columns_param else []
-        data = func(con, columns_params)
-    else:
-        data = func(con)
-    
+    try:
+        if columns_param is not None:
+            columns_params = columns_param.split(',') if columns_param else []
+            data = func(con, columns_params)
+        else:
+            data = func(con)
+    except Exception as ex:
+        con.close()
+
+    con.close()
     formatted_data = convert(data)
     return jsonify(formatted_data)
 
