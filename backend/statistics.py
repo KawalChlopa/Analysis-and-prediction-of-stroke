@@ -13,17 +13,16 @@ def connection():
         print('Connection failed')
 
 
-def average(con, columns, group):
+def average(con, columns, group=None):
     select_clause = ', '.join([f'ROUND(AVG({col}), 2) as average_{col}' for col in columns])
     query = f"""
-    SELECT {group}, {select_clause} 
+    SELECT {select_clause}
     FROM Indicators 
     WHERE had_heart_attack = 1 
-    GROUP BY {group}
     """
     if group == 'state_id':
         query = f"""
-        SELECT s.name as State, {select_clause}
+        SELECT s.name, {select_clause}
         FROM Indicators i
         JOIN State s ON i.state_id = s.id
         WHERE had_heart_attack = 1
@@ -31,11 +30,11 @@ def average(con, columns, group):
         """
     elif group == 'age_category_id':
         query = f"""
-        SELECT ac.name as AgeCategory, {select_clause}
+        SELECT s.name, {select_clause}
         FROM Indicators i
-        JOIN AgeCategory ac ON i.age_category_id = ac.id
+        JOIN AgeCategory s ON i.age_category_id = s.id
         WHERE had_heart_attack = 1
-        GROUP BY ac.name
+        GROUP BY s.name
         """
 
     print(f"Executing query: {query}")

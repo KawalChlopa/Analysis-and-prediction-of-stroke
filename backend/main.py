@@ -25,7 +25,6 @@ def connection():
 def convert(result):
     columns = [col[0] for col in result.description]
     formatted_data = [dict(zip(columns, row)) for row in result.fetchall()]
-    print(formatted_data)
     return formatted_data
 
 
@@ -63,7 +62,7 @@ def get_statistics():
     group_by_param = request.args.get('group_by')
     statistic_param = request.args.get('statistic')
 
-    if not columns_param or not statistic_param or not group_by_param:
+    if not columns_param or not statistic_param:
         return jsonify({'error': 'Missing required parameters: columns or statistic'}), 400
     columns_list = columns_param.split(',')
 

@@ -13,7 +13,7 @@ def diseases(con, columns, group):
         query = f"""
         SELECT Indicators.{group} as name, {", ".join(columns)}
         FROM Indicators
-        WHERE had_stroke = 1
+        WHERE had_heart_attack = 1
         GROUP BY Indicators.{group};
         """
     else:
@@ -27,16 +27,16 @@ def diseases(con, columns, group):
         elif group == 'state_id':
             query += "JOIN State x ON Indicators.state_id = x.id"
         elif group == 'general_health_id':
-            query += "JOIN GeneralHealth x ON Indicators.state_id = x.id"
+            query += "JOIN GeneralHealth x ON Indicators.general_health_id = x.id"
         elif group == 'race_id':
-            query += "JOIN RaceEthnicityCategory x ON Indicators.state_id = x.id"
+            query += "JOIN RaceEthnicityCategory x ON Indicators.race_ethnicity_category_id = x.id"
         elif group == 'ecigarette_usage_id':
-            query += "JOIN ECigaretteUsage x ON Indicators.state_id = x.id"
+            query += "JOIN ECigaretteUsage x ON Indicators.ecigarette_usage_id = x.id"
         elif group == 'covid_pos_id':
-            query += "JOIN CovidPos x ON Indicators.state_id = x.id"
+            query += "JOIN CovidPos x ON Indicators.covid_pos_id = x.id"
 
         query += """
-        WHERE had_stroke = 1
+        WHERE had_heart_attack = 1
         GROUP BY x.name;
         """
 
