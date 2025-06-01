@@ -11,7 +11,7 @@ special_case = {
 def average(con, columns, group=None):
     select_clause = ', '.join([f'ROUND(AVG({col}), 2) as average_{col}' for col in columns])
     query = f"""
-    SELECT {group}, {select_clause} 
+    SELECT {select_clause} 
     FROM Indicators 
     WHERE had_heart_attack = 1 
     """
