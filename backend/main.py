@@ -1,13 +1,10 @@
 import duckdb as dd
 from flask import Flask, jsonify, request
 from persistence import db_location
-from backend import diseases, statistics, total
+from backend import diseases, statistics
 from flask import render_template  # already imported jsonify
 
-endpoint_map = {
-     # Total
-    'Total': total.Total,
-}
+
 app = Flask(__name__, template_folder='../templates')
 
 
@@ -58,6 +55,16 @@ def get_diseases_grouped_by():
 @app.route('/api/Statistics', methods=['GET'])
 def get_statistics():
 
+    statistic = {
+        'average': 'average',
+        'median': 'median',
+        'stddev': 'standard_deviation',
+        'max': 'max_value',
+        'min': 'min_value',
+        'percentile': 'percentile',
+        'total': 'total'
+    }
+
     columns_param = request.args.get('columns')
     group_by_param = request.args.get('group_by')
     statistic_param = request.args.get('statistic')
@@ -66,7 +73,7 @@ def get_statistics():
         return jsonify({'error': 'Missing required parameters: columns or statistic'}), 400
     columns_list = columns_param.split(',')
 
-    if statistic_param not in ['average', 'median', 'stddev', 'max', 'min', 'percentile']:
+    if statistic_param not in statistic:
         return jsonify({'error': 'Invalid statistic parameter'}), 400
     
     con = connection()
@@ -74,21 +81,10 @@ def get_statistics():
         return jsonify({'error': 'Database connection failed'}), 500
     
     try:
-        if statistic_param == 'average':
-            data = statistics.average(con, columns_list, group_by_param)
-        elif statistic_param == 'median':
-            data = statistics.median(con, columns_list, group_by_param)
-        elif statistic_param == 'stddev':
-            data = statistics.standard_deviation(con, columns_list, group_by_param)
-        elif statistic_param == 'max':
-            data = statistics.max_value(con, columns_list, group_by_param)
-        elif statistic_param == 'min':
-            data = statistics.min_value(con, columns_list, group_by_param)
-        elif statistic_param == 'percentile':
-            data = statistics.percentile(con, columns_list, group_by_param)
-        else:
-            return jsonify({'error': 'Invalid statistic parameter'}), 400
         
+        func_name = statistic.get(statistic_param, None)
+        func = getattr(statistics, func_name)
+        data = func(con, columns_list, group_by_param)
 
         if data is None:
             return jsonify({'error': 'Query returned no results'}), 404
@@ -103,27 +99,6 @@ def get_statistics():
         con.close()
 
 
-@app.route('/api/<endpoint>', methods=['GET'])
-def api(endpoint):
-    con = connection()
-    func = endpoint_map.get(endpoint)
-    columns_param = request.args.get('columns')
-
-    if func is None:
-        return jsonify({'error': 'Endpoint not found'}), 404
-
-    try:
-        if columns_param is not None:
-            columns_params = columns_param.split(',') if columns_param else []
-            data = func(con, columns_params)
-        else:
-            data = func(con)
-    except Exception as ex:
-        con.close()
-
-    con.close()
-    formatted_data = convert(data)
-    return jsonify(formatted_data)
 
 
 if __name__ == '__main__':
