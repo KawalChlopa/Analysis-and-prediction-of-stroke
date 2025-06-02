@@ -5,7 +5,15 @@ from persistence import db_location
 
 special_case = {
     'state_id': 'State',
-    'age_category_id': 'AgeCategory'
+    'age_category_id': 'AgeCategory',
+    'smoker_status_id': 'SmokerStatus',
+    'general_health_id': 'GeneralHealth',
+    'covid_pos_id': 'CovidPos',
+    'ecigarette_usage_id': 'ECigaretteUsage',
+    'tetanus_last_10_tdap_id': 'TetanusLast10Tdap',
+    'had_diabetes_id': 'HadDiabetes',
+    'race_ethnicity_category_id': 'RaceEthnicityCategory',
+    'removed_teeth_id': 'RemovedTeeth',
 }
 
 def average(con, columns, group=None):
@@ -127,4 +135,13 @@ def percentile(con, columns, group=None):
 
     print(f"Executing query: {query}")
     result = con.execute(query)
+    return result
+
+def total(con, columns, group=None):
+    result = con.execute("""
+                         SELECT 
+                             COUNT(*) as 'total'
+                         FROM Indicators
+                         """)
+    
     return result
