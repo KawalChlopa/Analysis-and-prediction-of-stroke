@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Stroke Analysis Dashboard</title>
+    <meta charset="UTF-8" />
+    <title>Stroke Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             margin: 0;
@@ -21,269 +22,239 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
 
+        nav {
+            background-color: #ffffff;
+            padding: 1rem 2rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        nav a {
+            margin: 0 1rem;
+            text-decoration: none;
+            color: #00695c;
+            font-weight: bold;
+        }
+
         .container {
             padding: 2rem;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
+            gap: 1.5em;
         }
 
         .card {
             background-color: white;
             border-radius: 12px;
-            padding: 1rem;
+            padding: 2rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
+            transition: box-shadow 0.3s;
+            cursor: pointer;
         }
 
         .card:hover {
-            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .chart-description {
+            margin-top: 1em;
+            color: #555;
+            display: none;
         }
 
         canvas {
             width: 100% !important;
-            height: 300px !important;
+            height: auto !important;
         }
-
-        nav {
-            text-align: center;
-            background-color: #e0f2f1;
-            padding: 1rem;
-        }
-
-        nav a {
-            text-decoration: none;
-            color: #00695c;
-            margin: 0 1rem;
-            font-weight: bold;
-        }
-
-        footer {
-            text-align: center;
-            padding: 1rem;
-            background-color: #eeeeee;
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .chart-description {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.6s ease, padding 0.3s ease;
-            padding: 0 1rem;
-        }
-
-        .chart-description p {
-            color: #444;
-            font-size: 0.9rem;
-            margin: 0.5rem 0;
-        }
-
-        .card.active .chart-description {
-            max-height: 100px;
-            padding: 0.5rem 1rem;
-        }
-
-
-
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet-ajax"></script>
 </head>
 <body>
-<header>
-    Stroke Analysis Dashboard
-</header>
-<nav>
-    <a href="/">Dashboard</a>
-    <a href="/prediction">Stroke Prediction</a>
-</nav>
-<div class="container">
-    <div class="card" onclick="toggleDescription(this)">
-        <h3>Age Distribution of Stroke Cases</h3>
-        <canvas id="ageChart"></canvas>
-        <div class="chart-description">
-            <p>This chart shows the number of strokes reported within each age group. It helps visualize how stroke frequency changes with age.</p>
+    <header>Analysis Dashboard</header>
+    <nav>
+        <a href="/">Dashboard</a>
+        <a href="/prediction">Stroke Prediction</a>
+    </nav>
+
+    <div class="container">
+        <div class="card" onclick="toggleDescription(this)">
+            <h3>Stroke Distribution by State</h3>
+            <canvas id="chartState"></canvas>
+            <div class="chart-description">
+                <p>This bar chart displays the number of stroke cases grouped by state.</p>
+            </div>
+        </div>
+
+        <div class="card" onclick="toggleDescription(this)">
+            <h3>Stroke Distribution by Age</h3>
+            <canvas id="chartAge"></canvas>
+            <div class="chart-description">
+                <p>This chart shows how stroke cases are distributed across different age groups.</p>
+            </div>
+        </div>
+
+        <div class="card" onclick="toggleDescription(this)">
+            <h3>Stroke Distribution by Sex</h3>
+            <canvas id="chartSex"></canvas>
+            <div class="chart-description">
+                <p>This chart compares stroke incidence between males and females.</p>
+            </div>
+        </div>
+
+        <div class="card" onclick="toggleDescription(this)">
+            <h3>Disease Co-Occurrences in Stroke Cases</h3>
+            <div style="margin-bottom: 1em;">
+                <label for="groupBySelector"><strong>Group by:</strong></label>
+                <select id="groupBySelector" onchange="onGroupByChange()">
+                    <option value="state_id" selected>State</option>
+                    <option value="sex">Sex</option>
+                    <option value="age_category_id">Age Category</option>
+                </select>
+            </div>
+            <canvas id="diseasesChart"></canvas>
+            <div class="chart-description">
+                <p>This chart shows how often certain diseases occurred among individuals who had a stroke, grouped by the selected category.</p>
+            </div>
         </div>
     </div>
 
-    <div class="card" onclick="toggleDescription(this)">
-        <h3>Stroke Incidence by Sex</h3>
-        <canvas id="sexChart"></canvas>
-        <div class="chart-description">
-            <p>This chart compares stroke cases between male and female respondents.</p>
-        </div>
-    </div>
+    <script>
+        function toggleDescription(card) {
+            const desc = card.querySelector('.chart-description');
+            desc.style.display = desc.style.display === 'block' ? 'none' : 'block';
+        }
 
-    <div class="card" onclick="toggleDescription(this)">
-        <h3>Stroke Distribution by Race/Ethnicity</h3>
-        <canvas id="raceChart"></canvas>
-        <div class="chart-description">
-            <p>This chart breaks down stroke cases based on race and ethnicity, highlighting potential health disparities among different groups.</p>
-        </div>
-    </div>
+        async function renderMap() {
+            const response = await fetch('/api/map');
+            const data = await response.json();
 
-    <div class="card" onclick="toggleDescription(this)">
-        <h3>Smoking Status and Stroke Incidence</h3>
-        <canvas id="smokersChart"></canvas>
-        <div class="chart-description">
-            <p>This chart displays the number of strokes among people with different smoking habits, indicating the impact of smoking on stroke risk.</p>
-        </div>
-    </div>
-
-    <div class="card" onclick="toggleDescription(this)">
-        <h3>General Health vs Stroke Occurrence</h3>
-        <canvas id="healthChart"></canvas>
-        <div class="chart-description">
-            <p>This chart shows how people’s self-reported general health status relates to the likelihood of having a stroke.</p>
-        </div>
-    </div>
-
-    <div class="card" onclick="toggleDescription(this)">
-        <h3>Asthma and Stroke Incidence</h3>
-        <canvas id="asthmaChart"></canvas>
-        <div class="chart-description">
-            <p>This chart explores the relationship between asthma diagnoses and stroke cases.</p>
-        </div>
-    </div>
-
-    <div class="card" onclick="toggleDescription(this)">
-        <h3>Overall Stroke Occurrence</h3>
-        <canvas id="strokeChart"></canvas>
-        <div class="chart-description">
-            <p>This chart summarizes the total number of people who have experienced a stroke compared to those who haven’t.</p>
-        </div>
-    </div>
-</div>
-
-<footer>
-    &copy; 2025 Stroke Insights • Built with Flask, DuckDB, and Chart.js
-</footer>
-
-<script>
-    let selectedState = null;
-
-    async function loadChart(apiUrl, canvasId, labelKey, valueKey) {
-        let url = apiUrl;
-        if (selectedState) url += `?state=${encodeURIComponent(selectedState)}`;
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        const labels = data.map(row => row[labelKey]);
-        const values = data.map(row => row[valueKey]);
-
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        if (window[canvasId + '_instance']) window[canvasId + '_instance'].destroy();
-
-        window[canvasId + '_instance'] = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Count',
-                    data: values,
-                    backgroundColor: 'rgba(0, 150, 136, 0.7)',
-                    borderColor: 'rgba(0, 150, 136, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => `${ctx.parsed.y} people`
+            const ctx = document.getElementById('chartState').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        label: 'Stroke Count',
+                        data: data.map(d => d.stroke_count),
+                        backgroundColor: '#4DB6AC'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Count' }
+                        },
+                        x: {
+                            title: { display: true, text: 'State' }
                         }
                     }
+                }
+            });
+        }
+
+        async function loadChart(endpoint, canvasId, labelName, color, xLabel) {
+            const res = await fetch(endpoint);
+            const data = await res.json();
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        label: labelName,
+                        data: data.map(d => d.stroke_count),
+                        backgroundColor: color
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Count' }
+                        },
+                        x: {
+                            title: { display: true, text: xLabel }
+                        }
                     }
                 }
-            }
-        });
-    }
-
-    function loadAllCharts() {
-        loadChart('/api/Age', 'ageChart', 'Age group', 'had stroke');
-        loadChart('/api/Sex', 'sexChart', 'sex', 'had stroke');
-        loadChart('/api/RaceEthnicity', 'raceChart', 'Race Ethnicty', 'had stroke');
-        loadChart('/api/Smokers', 'smokersChart', 'Smoking Status', 'had stroke');
-        loadChart('/api/GeneralHealth', 'healthChart', 'name', 'had stroke');
-        loadChart('/api/Asthma', 'asthmaChart', 'Had Asthma', 'had stroke');
-        loadChart('/api/Stroke', 'strokeChart', 'Had Stroke', 'total');
-    }
-
-    function toggleDescription(card) {
-        card.classList.toggle("active");
-        if (card.classList.contains("active")) {
-            setTimeout(() => {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
+            });
         }
-    }
 
-    async function renderMap() {
-        const response = await fetch('/api/State');
-        const data = await response.json();
+        async function loadDiseasesChart(group_by, columns) {
+            const url = `/api/Diseases?group_by=${group_by}&columns=${columns.join(',')}`;
+            const response = await fetch(url);
+            const data = await response.json();
 
-        const map = L.map('usMap').setView([37.8, -96], 4);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 6,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        // Load US states GeoJSON (static file or CDN, assuming served at /static/us-states.json)
-        const geoJsonLayer = new L.GeoJSON.AJAX('/static/us-states.json', {
-            onEachFeature: function (feature, layer) {
-                layer.on('click', function () {
-                    selectedState = feature.properties.name;
-                    loadAllCharts();
-                });
-                layer.bindPopup(feature.properties.name);
-                layer.setStyle({ color: '#00695c', weight: 1, fillOpacity: 0.5 });
+            if (!Array.isArray(data)) {
+                console.error("Unexpected response format:", data);
+                return;
             }
-        });
-        geoJsonLayer.addTo(map);
-    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        renderMap();
-        loadAllCharts();
-    });
-</script>
-<script>
-    // Function to fetch and update charts based on the selected state
-    async function updateChartsByState(stateAbbr) {
-        // Define the endpoints for each chart, appending the state abbreviation as a query parameter
-        const endpoints = {
-            ageChart: `/api/Age?state=${stateAbbr}`,
-            sexChart: `/api/Sex?state=${stateAbbr}`,
-            raceChart: `/api/RaceEthnicity?state=${stateAbbr}`,
-            smokersChart: `/api/Smokers?state=${stateAbbr}`,
-            healthChart: `/api/GeneralHealth?state=${stateAbbr}`,
-            asthmaChart: `/api/Asthma?state=${stateAbbr}`,
-            strokeChart: `/api/Stroke?state=${stateAbbr}`
-        };
+            const labels = data.map(row => row.name);
+            const datasets = columns.map((col, i) => ({
+                label: col.replace(/_/g, ' ').toUpperCase(),
+                data: data.map(row => row[col]),
+                backgroundColor: `hsl(${(i * 60) % 360}, 70%, 60%)`
+            }));
 
-        // Loop through each chart and update it
-        for (const [chartId, url] of Object.entries(endpoints)) {
-            await loadChart(url, chartId, 'label', 'value'); // Adjust 'label' and 'value' keys as per your API response
+            const ctx = document.getElementById('diseasesChart').getContext('2d');
+            if (window.diseasesChartInstance) window.diseasesChartInstance.destroy();
+
+            window.diseasesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: { mode: 'index', intersect: false },
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Number of Stroke Cases' }
+                        },
+                        x: {
+                            title: { display: true, text: group_by.replace(/_/g, ' ').toUpperCase() }
+                        }
+                    }
+                }
+            });
         }
-    }
 
-    // Add event listeners to each state path
-    document.querySelectorAll('#us-map path').forEach(path => {
-        path.addEventListener('click', () => {
-            const stateAbbr = path.id;
-            updateChartsByState(stateAbbr);
+        function onGroupByChange() {
+            const groupBy = document.getElementById('groupBySelector').value;
+            const diseases = ['had_skin_cancer', 'had_copd', 'had_depressive_disorder', 'had_kidney_disease'];
+            loadDiseasesChart(groupBy, diseases);
+        }
+
+        function loadAllCharts() {
+            loadChart("/api/groupby?field=age_category_id", "chartAge", "Stroke Count by Age", "#FF8A65", "Age Category");
+            loadChart("/api/groupby?field=sex", "chartSex", "Stroke Count by Sex", "#9575CD", "Sex");
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMap();
+            loadAllCharts();
+            loadDiseasesChart('state_id', [
+                'had_skin_cancer',
+                'had_copd',
+                'had_depressive_disorder',
+                'had_kidney_disease'
+            ]);
         });
-    });
-</script>
+    </script>
 </body>
 </html>
