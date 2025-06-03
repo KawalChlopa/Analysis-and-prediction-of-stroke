@@ -37,7 +37,8 @@ def diseases(con, columns, group):
 
         query += """
         WHERE had_heart_attack = 1
-        GROUP BY x.name;
+        GROUP BY x.name
+        ORDER BY x.name;
         """
 
     print(f"Executing query: {query}")

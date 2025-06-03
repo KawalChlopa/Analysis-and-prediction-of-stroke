@@ -133,10 +133,6 @@
                     <input type="number" name="mental_health_days" required>
                 </div>
                 <div class="field-group">
-                    <label>Age Category ID</label>
-                    <input type="number" name="age_category_id" required>
-                </div>
-                <div class="field-group">
                     <label>Tetanus Last 10 TD</label>
                     <input type="number" name="tetanus_last_10_td" required>
                 </div>
@@ -157,71 +153,92 @@
                     <input type="number" name="weight_in_kilograms" required>
                 </div>
 
-                <!-- Select fields -->
-                <label>general_health_id
-                    <select name="general_health_id">
-                        <option value="5">Fair</option>
-                        <option value="1">Very good</option>
-                        <option value="4">Good</option>
-                        <option value="3">Poor</option>
-                        <option value="2">Excellent</option>
-                    </select>
-                </label>
 
-                <label>had_diabetes_id
-                    <select name="had_diabetes_id">
-                        <option value="1">Yes</option>
-                        <option value="4">Yes, but only during pregnancy (female)</option>
-                        <option value="3">No, pre-diabetes or borderline diabetes</option>
-                        <option value="2">No</option>
-                    </select>
-                </label>
 
-                <label>removedteeth
-                    <select name="removedteeth">
-                        <option value="1">None of them</option>
-                        <option value="2">1 to 5</option>
-                        <option value="3">All</option>
-                        <option value="4">6 or more, but not all</option>
-                    </select>
-                </label>
+<!-- Select fields -->
 
-                <label>smoker_status
-                    <select name="smoker_status">
-                        <option value="2">Former smoker</option>
-                        <option value="1">Never smoked</option>
-                        <option value="3">Current smoker - now smokes every day</option>
-                        <option value="4">Current smoker - now smokes some days</option>
-                    </select>
-                </label>
+<label>General Health Status
+    <select name="general_health_id">
+        <option value="5">Fair</option>
+        <option value="1">Very good</option>
+        <option value="3">Good</option>
+        <option value="4">Poor</option>
+        <option value="2">Excellent</option>
+    </select>
+</label>
 
-                <label>ecigarette_usage_id
-                    <select name="ecigarette_usage_id">
-                        <option value="1">Use them some days</option>
-                        <option value="4">Not at all (right now)</option>
-                        <option value="3">Never used e-cigarettes in my entire life</option>
-                        <option value="2">Use them every day</option>
-                    </select>
-                </label>
+<div class="field-group">
+    <label>Age Category ID</label>
+    <select name="age_category_id" required>
+        <option value="11">Age 18 to 24</option>
+        <option value="2">Age 25 to 29</option>
+        <option value="12">Age 30 to 34</option>
+        <option value="7">Age 35 to 39</option>
+        <option value="10">Age 40 to 44</option>
+        <option value="6">Age 45 to 49</option>
+        <option value="8">Age 50 to 54</option>
+        <option value="13">Age 55 to 59</option>
+        <option value="4">Age 60 to 64</option>
+        <option value="5">Age 65 to 69</option>
+        <option value="1">Age 70 to 74</option>
+        <option value="3">Age 75 to 79</option>
+        <option value="9">Age 80 or older</option>
+    </select>
+</div>
 
-                <label>race_ethnicity_category_id
-                    <select name="race_ethnicity_category_id">
-                        <option value="1">Other race only, Non-Hispanic</option>
-                        <option value="2">Hispanic</option>
-                        <option value="3">White only, Non-Hispanic</option>
-                        <option value="4">Multiracial, Non-Hispanic</option>
-                        <option value="5">Black only, Non-Hispanic</option>
-                    </select>
-                </label>
+<label>Had Diabetes?
+    <select name="had_diabetes_id">
+        <option value="1">Yes</option>
+        <option value="4">Yes, but only during pregnancy (female)</option>
+        <option value="2">No</option>
+        <option value="3">No, pre-diabetes or borderline diabetes</option>
+    </select>
+</label>
 
-                <label>CovidPos
-                    <select name="CovidPos">
-                        <option value="1">Yes</option>
-                        <option value="2">Tested positive using home test without a health professional</option>
-                        <option value="3">No</option>
-                    </select>
-                </label>
-            </div>
+<label>No. of Removed Teeth
+    <select name="removedteeth">
+        <option value="1">None of them</option>
+        <option value="2">1 to 5</option>
+        <option value="3">6 or more but not all</option>
+        <option value="4">All</option>
+    </select>
+</label>
+
+<label>Smoker status
+    <select name="smoker_status">
+        <option value="2">Former smoker</option>
+        <option value="1">Never smoked</option>
+        <option value="3">Current smoker</option>
+    </select>
+</label>
+
+<label>E-Cigarette usage
+    <select name="ecigarette_usage_id">
+        <option value="1">Use them some days</option>
+        <option value="4">Not at all (right now)</option>
+        <option value="2">Use them every day</option>
+        <option value="3">Tried them a few times</option>
+    </select>
+</label>
+
+<label>Race and Ethnicity
+    <select name="race_ethnicity_category_id">
+        <option value="1">Other race only, Non-Hispanic</option>
+        <option value="2">Hispanic</option>
+        <option value="3">White only, Non-Hispanic</option>
+        <option value="4">Black only, Non-Hispanic</option>
+        <option value="5">Asian only, Non-Hispanic</option>
+    </select>
+</label>
+
+<label>Covid Positive Test
+    <select name="CovidPos">
+        <option value="1">Yes</option>
+        <option value="2">Tested positive using home test without a health professional</option>
+        <option value="3">No</option>
+    </select>
+</label>
+
 
             <button type="submit">Predict Stroke Risk</button>
         </form>

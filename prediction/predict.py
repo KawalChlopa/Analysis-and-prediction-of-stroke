@@ -7,10 +7,10 @@ def predict_heart_attack_neural(sample: dict):
 
     cwd = os.getcwd()
     parent_dir = os.path.dirname(cwd)
-    model_path = os.path.join(parent_dir, 'persistence', 'neural_network_model.keras')
-    encoders_path = os.path.join(parent_dir, 'persistence', 'label_encoders.joblib')
-    features_path = os.path.join(parent_dir, 'persistence', 'model_features.joblib')
-    scaler_path = os.path.join(parent_dir, 'persistence', 'scaler.joblib')
+    model_path = os.path.join('persistence', 'neural_network_model.keras')
+    encoders_path = os.path.join('persistence', 'label_encoders.joblib')
+    features_path = os.path.join('persistence', 'model_features.joblib')
+    scaler_path = os.path.join('persistence', 'scaler.joblib')
 
     model = keras.models.load_model(model_path)
     label_encoders = joblib.load(encoders_path)

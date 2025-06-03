@@ -1,9 +1,13 @@
 import duckdb as dd
 from flask import Flask, jsonify, request
 from persistence import db_location
-from backend import diseases, statistics
-from flask import render_template  # already imported jsonify
+from backend import diseases, statistics, total
+from keras.models import load_model
+model = load_model("persistence/neural_network_model.keras")
+from prediction.predict import predict_heart_attack_neural
+from flask import request, jsonify
 
+from flask import render_template
 
 app = Flask(__name__, template_folder='../templates')
 
@@ -17,6 +21,52 @@ def connection():
         return con
     else:
         print('Connection failed')
+
+
+@app.route('/')
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/prediction')
+def stroke_prediction():
+    return render_template('stroke-prediction.html')
+
+@app.route('/predict-stroke', methods=['POST'])
+def predict_stroke():
+    try:
+        input_data = request.get_json()
+
+        if not input_data:
+            return jsonify({'error': 'No input data received'}), 400
+
+        # Convert data types properly
+        for key, value in input_data.items():
+            if isinstance(value, str):
+                if value.lower() == 'true':
+                    input_data[key] = True
+                elif value.lower() == 'false':
+                    input_data[key] = False
+                elif value.isdigit():
+                    input_data[key] = int(value)
+                else:
+                    try:
+                        input_data[key] = float(value)
+                    except ValueError:
+                        pass  # Keep as string
+
+        print(f"Sanitized input: {input_data}")
+
+        prediction, probability = predict_heart_attack_neural(input_data)
+
+        # Format final response: "Low 0.06%" or "High 97.32%"
+        label = "High" if prediction == 1 else "Low"
+        formatted_probability = f"{label} {probability * 100:.2f}%"
+
+        return jsonify({'probability': formatted_probability})
+
+    except Exception as e:
+        print(f"Prediction error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 def convert(result):
