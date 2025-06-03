@@ -68,6 +68,7 @@ def predict_stroke():
         print(f"Prediction error: {e}")
         return jsonify({'error': str(e)}), 500
 
+
 def convert(result):
     columns = [col[0] for col in result.description]
     formatted_data = [dict(zip(columns, row)) for row in result.fetchall()]
