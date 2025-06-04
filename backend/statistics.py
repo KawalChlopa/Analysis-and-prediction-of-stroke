@@ -136,6 +136,27 @@ def percentile(con, columns, group=None):
     print(f"Executing query: {query}")
     result = con.execute(query)
     return result
+def comorbidity(con, columns, group=None):
+    if not columns or len(columns) > 6:
+        raise ValueError("You must provide between 1 and 3 columns for comorbidity analysis")
+
+    # Build the condition: all selected indicators must be TRUE
+    condition = " AND ".join(f"{col} = TRUE" for col in columns)
+
+    query = f"""
+    SELECT 
+        had_heart_attack,
+        COUNT(*) AS count
+    FROM Indicators
+    WHERE {condition}
+    GROUP BY had_heart_attack
+    """
+
+    print(f"Executing query: {query}")
+    result = con.execute(query)
+    return result
+
+
 
 def total(con, columns, group=None):
     result = con.execute("""

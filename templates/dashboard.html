@@ -141,6 +141,22 @@
     </div>
 </div>
 
+<div class="card" onclick="toggleDescription(this)">
+    <h3>Heart Attack Occurrence by Indicators</h3>
+    <div style="width: 50%; margin: 0 auto;">
+        <label>Select Indicators:</label>
+<div id="heartAttackIndicatorChecklist" style="margin-bottom: 1em; display: flex; flex-wrap: wrap; gap: 0.5em;">
+    <!-- Checkboxes will appear here horizontally -->
+</div>
+        <canvas id="heartAttackRatioChart"></canvas>
+    </div>
+    <div class="chart-description">
+        <p>This chart shows how people with the selected conditions (e.g., Angina, HIV Test) are distributed in terms of heart attack occurrence.</p>
+    </div>
+</div>
+
+
+
         <div class="card">
             <h3>Disease Co-Occurrences in heart attack Cases</h3>
             <div style="margin-bottom: 1em;">
@@ -476,6 +492,79 @@ async function renderPercentilePieChart() {
     });
 }
 
+function populateHeartAttackIndicatorChecklist() {
+    const container = document.getElementById('heartAttackIndicatorChecklist');
+    container.innerHTML = ''; // Clear previous content
+
+    pieChartIndicators.forEach(indicator => {
+        const label = document.createElement('label');
+        label.style.marginRight = '1em';  // Horizontal spacing
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = indicator;
+        checkbox.name = 'indicator';
+        checkbox.addEventListener('change', renderHeartAttackRatioChartDynamic);
+
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + indicator.replace(/_/g, ' ').toUpperCase()));
+        container.appendChild(label);
+    });
+
+    // Pre-select the first indicator
+    const firstCheckbox = container.querySelector('input[type="checkbox"]');
+    if (firstCheckbox) firstCheckbox.checked = true;
+
+    renderHeartAttackRatioChartDynamic();
+}
+
+async function renderHeartAttackRatioChartDynamic() {
+    const checkboxes = document.querySelectorAll('#heartAttackIndicatorChecklist input[name="indicator"]:checked');
+    const selectedIndicators = Array.from(checkboxes).map(cb => cb.value);
+    if (selectedIndicators.length === 0) return;
+
+    const columnsParam = selectedIndicators.join(',');
+    const url = `/api/Statistics?columns=${columnsParam}&statistic=comorbidity`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data || data.length === 0) return;
+
+    const labels = data.map(item => item.had_heart_attack ? 'Had Heart Attack' : 'Did Not Have Heart Attack');
+    const values = data.map(item => item.count);
+
+    const ctx = document.getElementById('heartAttackRatioChart').getContext('2d');
+    if (window.heartAttackRatioChartInstance) window.heartAttackRatioChartInstance.destroy();
+
+    window.heartAttackRatioChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: ['#ef5350', '#66bb6a']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const value = context.raw;
+                            const percent = ((value / total) * 100).toFixed(2);
+                            return `${context.label}: ${value} (${percent}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+
 
 
         function loadAllCharts() {
@@ -491,6 +580,7 @@ async function renderPercentilePieChart() {
     createPieChartCheckboxes();
     renderAverageChart();
             renderPercentilePieChart();
+            populateHeartAttackIndicatorChecklist();
         });
     </script>
 </body>
