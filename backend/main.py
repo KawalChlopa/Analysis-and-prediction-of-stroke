@@ -8,7 +8,7 @@ from prediction.predict import predict_heart_attack_neural
 from flask import request, jsonify
 
 from flask import render_template
-import statistics as stats_custom
+
 app = Flask(__name__, template_folder='../templates')
 
 
