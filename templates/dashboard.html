@@ -78,7 +78,17 @@
         .checkboxes label {
             font-size: 0.9rem;
         }
-
+                .grouping-control {
+            margin-bottom: 1em;
+        }
+        .grouping-control label {
+            margin-right: 0.5em;
+            font-weight: bold;
+        }
+        select {
+            padding: 0.4em;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -93,36 +103,43 @@
         <!-- Updated Average Values Card -->
         <div class="card" onclick="toggleDescription(this)">
             <h3>Average Values for Heart Attack Patients</h3>
+                        <div class="grouping-control">
+                <label for="averageGroupSelector">Group by:</label>
+                <select id="averageGroupSelector" onchange="renderAverageChart()">
+                    <option value="age_category_id">Age</option>
+                    <option value="covid_pos_id">Covid Positive</option>
+                    <option value="removed_teeth_id">Removed Teeth</option>
+                    <option value="had_diabetes_id">Diabetes</option>
+                    <option value="ecigarette_usage_id">E-Cigarette Usage</option>
+                    <option value="state_id">State</option>
+                    <option value="general_health_id">General Health</option>
+                    <option value="smoker_status_id">Smoker Status</option>
+                </select>
+                            <label for="statisticSelector" style="margin-left: 1em;">Statistic:</label>
+        <select id="statisticSelector" onchange="renderAverageChart()">
+            <option value="average">Average</option>
+            <option value="median">Median</option>
+            <option value="min">Min</option>
+            <option value="max">Max</option>
+            <option value="stddev">Standard Deviation</option>
+        </select>
+            </div>
             <canvas id="chartAverage"></canvas>
             <div class="chart-description">
                 <p>This chart displays the average values of selected health indicators among individuals who have experienced a heart attack.</p>
             </div>
         </div>
 
-
         <div class="card" onclick="toggleDescription(this)">
-            <h3>Heart attack Distribution by State</h3>
-            <canvas id="chartState"></canvas>
-            <div class="chart-description">
-                <p>This bar chart displays the number of heart attack cases grouped by state.</p>
-            </div>
-        </div>
-
-        <div class="card" onclick="toggleDescription(this)">
-            <h3>Heart attack Distribution by Age</h3>
-            <canvas id="chartAge"></canvas>
-            <div class="chart-description">
-                <p>This chart shows how heart attack cases are distributed across different age groups.</p>
-            </div>
-        </div>
-
-        <div class="card" onclick="toggleDescription(this)">
-            <h3>Heart attack Distribution by Sex</h3>
-            <canvas id="chartSex"></canvas>
-            <div class="chart-description">
-                <p>This chart compares heart attack incidence between males and females.</p>
-            </div>
-        </div>
+    <h3>Percentile Distribution of Health Indicators</h3>
+            <div class="checkboxes" id="pieCheckboxes"></div>
+            <div style="width: 50%; margin: 0 auto;">
+        <canvas id="heartAttackPieChart"></canvas>
+    </div>
+    <div class="chart-description">
+        <p>This pie chart shows the percentile values of selected health indicators. Please note: the percentages shown are based off the entire population. Therefore 7 percent means 7/100th of the entire population of people who had a heart attack.</p>
+    </div>
+</div>
 
         <div class="card">
             <h3>Disease Co-Occurrences in heart attack Cases</h3>
@@ -303,57 +320,161 @@
         }
 
         async function renderAverageChart() {
-        const columns = [
-            'physical_health_days',
-            'mental_health_days',
-            'sleep_hours',
-            'height_in_cm',
-            'weight_in_kilograms',
-            'bmi'
-        ];
+            const columns = [
+                'physical_health_days',
+                'mental_health_days',
+                'sleep_hours',
+                'height_in_cm',
+                'weight_in_kilograms',
+                'bmi',
+            ];
+            const groupBy = document.getElementById('averageGroupSelector').value;
+            let url = `/api/Statistics?columns=${columns.join(',')}&statistic=average`;
+            if (groupBy) url += `&group_by=${groupBy}`;
 
-        const url = `/api/Statistics?columns=${columns.join(',')}&statistic=average`;
-
-        try {
             const res = await fetch(url);
             const data = await res.json();
-
-            const labels = columns.map(col => col.replace(/_/g, ' ').toUpperCase());
-            const values = columns.map(col => data[0][`average_${col}`]);
-
             const ctx = document.getElementById('chartAverage').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Average Value',
-                        data: values,
-                        backgroundColor: '#26a69a'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Value' }
-                        },
-                        x: {
-                            title: { display: true, text: 'Health Metrics' }
+
+            if (window.averageChartInstance) window.averageChartInstance.destroy();
+
+            if (groupBy) {
+                const labels = data.map(row => row.name);
+                const datasets = columns.map((col, i) => ({
+                    label: col.replace(/_/g, ' ').toUpperCase(),
+                    data: data.map(row => row[`average_${col}`]),
+                    backgroundColor: `hsl(${(i * 60) % 360}, 70%, 60%)`
+                }));
+
+                window.averageChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        plugins: { tooltip: { mode: 'index', intersect: false }, legend: { position: 'top' } },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Value' } },
+                            x: { title: { display: true, text: groupBy.replace(/_/g, ' ').toUpperCase() } }
                         }
                     }
-                }
-            });
-        } catch (err) {
-            console.error('Failed to load average chart data:', err);
-        }
-    }
+                });
+            } else {
+                const labels = columns.map(col => col.replace(/_/g, ' ').toUpperCase());
+                const values = columns.map(col => data[0][`average_${col}`]);
 
+                window.averageChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Average Value',
+                            data: values,
+                            backgroundColor: '#26a69a'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Value' }
+                            },
+                            x: {
+                                title: { display: true, text: 'Indicator' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+
+const pieChartIndicators = [
+    'had_angina', 'had_stroke', 'had_asthma', 'had_skin_cancer', 'had_copd',
+    'had_depressive_disorder', 'had_kidney_disease', 'had_arthritis',
+    'deaf_or_hard_of_hearing', 'blind_or_vision_difficulty',
+    'difficulty_concentrating', 'difficulty_walking',
+    'difficulty_dressing_bathing', 'difficulty_errands', 'chest_scan',
+    'alcohol_drinkers', 'hiv_testing', 'flu_vax_last_12',
+    'pneumo_vax_ever', 'high_risk_last_year'
+];
+
+function createPieChartCheckboxes() {
+    const container = document.getElementById('pieCheckboxes');
+    container.innerHTML = '';
+
+    pieChartIndicators.forEach(indicator => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = indicator;
+        checkbox.name = 'pieIndicator';
+        checkbox.addEventListener('change', onPieCheckboxChange);
+
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + indicator.replace(/_/g, ' ')));
+        container.appendChild(label);
+    });
+
+    // Pre-select first 6
+    container.querySelectorAll('input[type="checkbox"]')
+        .forEach((checkbox, i) => { if (i < 6) checkbox.checked = true; });
+
+    renderPercentilePieChart();
+}
+
+function onPieCheckboxChange() {
+    const checked = document.querySelectorAll('input[name="pieIndicator"]:checked');
+    if (checked.length > 6) {
+        this.checked = false;
+        alert('You can select up to 6 indicators for the pie chart.');
+    } else {
+        renderPercentilePieChart();
+    }
+}
+
+async function renderPercentilePieChart() {
+    const selectedIndicators = Array.from(document.querySelectorAll('input[name="pieIndicator"]:checked'))
+        .map(cb => cb.value);
+
+    if (selectedIndicators.length === 0) return;
+
+    const url = `/api/Statistics?columns=${selectedIndicators.join(',')}&statistic=percentile`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data || data.length === 0) return;
+
+    const percentileData = data[0];
+    const labels = selectedIndicators.map(col => col.replace(/_/g, ' ').toUpperCase());
+    const values = selectedIndicators.map(col => percentileData[`percent_${col}`] || 0);
+
+    const ctx = document.getElementById('heartAttackPieChart').getContext('2d');
+    if (window.percentilePieChartInstance) window.percentilePieChartInstance.destroy();
+
+    window.percentilePieChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: labels.map((_, i) =>
+                    `hsl(${(i * 60) % 360}, 70%, 60%)`)
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw.toFixed(2)}%` } }
+            }
+        }
+    });
+}
 
 
 
@@ -366,7 +487,10 @@
             renderMap();
             loadAllCharts();
             createDiseaseCheckboxes();
-            renderAverageChart();
+                createDiseaseCheckboxes();
+    createPieChartCheckboxes();
+    renderAverageChart();
+            renderPercentilePieChart();
         });
     </script>
 </body>
