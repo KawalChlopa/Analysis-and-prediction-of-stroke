@@ -112,7 +112,8 @@ def get_statistics():
         'max': 'max_value',
         'min': 'min_value',
         'percentile': 'percentile',
-        'total': 'total'
+        'total': 'total',
+        'comorbidity': 'comorbidity'
     }
 
     columns_param = request.args.get('columns')
@@ -147,7 +148,6 @@ def get_statistics():
         return jsonify({'error': str(e)}), 500
     finally:
         con.close()
-
 
 
 

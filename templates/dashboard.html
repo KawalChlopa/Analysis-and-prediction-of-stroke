@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
-    <title>Stroke Dashboard</title>
+    <title>Heart Attack Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -65,142 +66,177 @@
             width: 100% !important;
             height: auto !important;
         }
+
+        .checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1em;
+            margin-bottom: 1em;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .checkboxes label {
+            font-size: 0.9rem;
+        }
+                .grouping-control {
+            margin-bottom: 1em;
+        }
+        .grouping-control label {
+            margin-right: 0.5em;
+            font-weight: bold;
+        }
+        select {
+            padding: 0.4em;
+            border-radius: 4px;
+        }
     </style>
 </head>
+
 <body>
     <header>Analysis Dashboard</header>
-    <nav>
-        <a href="/">Dashboard</a>
-        <a href="/prediction">Stroke Prediction</a>
-    </nav>
-
+    <nav> <a href="/">Dashboard</a> <a href="/prediction">Heart Attack Prediction</a> </nav>
+    <p style="margin-top: 0.5em; font-size: 1.1em">
+        <div class="card">
+        Welcome to the Heart Attack Prediction Dashboard. This platform empowers you to explore the relationships between various health indicators and the likelihood of experiencing a heart attack.
+    <br><br>
+    Use the interactive charts, dropdowns, and checklists to filter and visualize the data from different angles—such as comorbidities, test results, and lifestyle choices. Whether you're a healthcare analyst, researcher, or just curious, this tool provides a clear and intuitive way to uncover patterns that could lead to better understanding and prevention of cardiovascular events.
+    <br><br>
+    Start by selecting indicators of interest and dive into the data to see how they correlate with heart attack occurrences. The more you explore, the more insights you'll discover.
+</p>
+        </div>
     <div class="container">
+        <!-- Updated Average Values Card -->
         <div class="card" onclick="toggleDescription(this)">
-            <h3>Stroke Distribution by State</h3>
-            <canvas id="chartState"></canvas>
+            <h3>Statistical Values for Heart Attack Patients</h3>
+            <div class="grouping-control"> <label for="averageGroupSelector">Group by:</label> <select id="averageGroupSelector" onchange="renderAverageChart()">
+                    <option value="age_category_id">Age</option>
+                    <option value="covid_pos_id">Covid Positive</option>
+                    <option value="removed_teeth_id">Removed Teeth</option>
+                    <option value="had_diabetes_id">Diabetes</option>
+                    <option value="ecigarette_usage_id">E-Cigarette Usage</option>
+                    <option value="state_id">State</option>
+                    <option value="general_health_id">General Health</option>
+                    <option value="smoker_status_id">Smoker Status</option>
+                </select> <label for="statisticSelector" style="margin-left: 1em;">Statistic:</label> <select id="statisticSelector" onchange="renderAverageChart()">
+                    <option value="average">Average</option>
+                    <option value="median">Median</option>
+                    <option value="min">Min</option>
+                    <option value="max">Max</option>
+                    <option value="stddev">Standard Deviation</option>
+                </select> </div> <canvas id="chartAverage"></canvas>
             <div class="chart-description">
-                <p>This bar chart displays the number of stroke cases grouped by state.</p>
+                <p>This chart displays the average values of selected health indicators among individuals who have experienced a heart attack.</p>
             </div>
         </div>
-
         <div class="card" onclick="toggleDescription(this)">
-            <h3>Stroke Distribution by Age</h3>
-            <canvas id="chartAge"></canvas>
+            <h3>Percentile Distribution of Health Indicators</h3>
+            <div class="checkboxes" id="pieCheckboxes"></div>
+            <div style="width: 40%; margin: 0 auto;"> <canvas id="heartAttackPieChart"></canvas> </div>
             <div class="chart-description">
-                <p>This chart shows how stroke cases are distributed across different age groups.</p>
+                <p>This pie chart shows the percentile values of selected health indicators. Please note: the percentages shown are based off the entire population. Therefore 7 percent means 7/100th of the entire population of people who had a heart attack. You may select up to 6 at once.</p>
             </div>
         </div>
-
         <div class="card" onclick="toggleDescription(this)">
-            <h3>Stroke Distribution by Sex</h3>
-            <canvas id="chartSex"></canvas>
+            <h3>Heart Attack Occurrence by Indicators</h3>
+            <div style="width: 40%; margin: 0 auto;"> <label>Select Indicators:</label>
+                <div id="heartAttackIndicatorChecklist" style="margin-bottom: 1em; display: flex; flex-wrap: wrap; gap: 0.5em;">
+                    <!-- Checkboxes will appear here horizontally -->
+                </div> <canvas id="heartAttackRatioChart"></canvas>
+            </div>
             <div class="chart-description">
-                <p>This chart compares stroke incidence between males and females.</p>
+                <p>This chart shows how people with the selected conditions (e.g., Angina, HIV Test) are distributed in terms of heart attack occurrence. You may select up to 6 at once.</p>
             </div>
         </div>
-
         <div class="card" onclick="toggleDescription(this)">
-            <h3>Disease Co-Occurrences in Stroke Cases</h3>
-            <div style="margin-bottom: 1em;">
-                <label for="groupBySelector"><strong>Group by:</strong></label>
-                <select id="groupBySelector" onchange="onGroupByChange()">
+            <h3>Disease Co-Occurrences in heart attack Cases</h3>
+            <div style="margin-bottom: 1em;"> <label for="groupBySelector"><strong>Group by:</strong></label> <select id="groupBySelector" onchange="onGroupByChange()">
                     <option value="state_id" selected>State</option>
                     <option value="sex">Sex</option>
                     <option value="age_category_id">Age Category</option>
-                </select>
-            </div>
-            <canvas id="diseasesChart"></canvas>
+                    <option value="bmi">BMI</option>
+                    <option value="weight_in_kilograms">Weight (kg)</option>
+                    <option value="race_id">Race (Ethnicity)</option>
+                    <option value="covid_pos_id">COVID Status</option>
+                    <option value="general_health_id">General Health</option>
+                    <option value="ecigarette_usage_id">E-Cigarette Usage</option>
+                </select> </div>
+            <div class="checkboxes" id="diseaseCheckboxes"></div> <canvas id="diseasesChart"></canvas>
             <div class="chart-description">
-                <p>This chart shows how often certain diseases occurred among individuals who had a stroke, grouped by the selected category.</p>
+                <p>This chart shows how often certain diseases occurred among individuals who had a heart attack, grouped by the selected category. You may select up to 5 at once.</p>
             </div>
         </div>
     </div>
-
     <script>
         function toggleDescription(card) {
             const desc = card.querySelector('.chart-description');
             desc.style.display = desc.style.display === 'block' ? 'none' : 'block';
         }
 
-        async function renderMap() {
-            const response = await fetch('/api/map');
-            const data = await response.json();
+        const allDiseases = [
+            'had_heart_attack', 'had_angina', 'had_stroke', 'had_asthma',
+            'had_skin_cancer', 'had_copd', 'had_depressive_disorder', 'had_kidney_disease',
+            'had_arthritis', 'deaf_or_hard_of_hearing', 'blind_or_vision_difficulty',
+            'difficulty_concentrating', 'difficulty_walking', 'difficulty_dressing_bathing',
+            'difficulty_errands', 'chest_scan', 'alcohol_drinkers', 'hiv_testing',
+            'flu_vax_last_12', 'pneumo_vax_ever', 'high_risk_last_year'
+        ];
 
-            const ctx = document.getElementById('chartState').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(d => d.name),
-                    datasets: [{
-                        label: 'Stroke Count',
-                        data: data.map(d => d.stroke_count),
-                        backgroundColor: '#4DB6AC'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Count' }
-                        },
-                        x: {
-                            title: { display: true, text: 'State' }
-                        }
-                    }
-                }
+        function createDiseaseCheckboxes() {
+            const container = document.getElementById('diseaseCheckboxes');
+            container.innerHTML = '';
+
+            allDiseases.forEach(disease => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = disease;
+                checkbox.name = 'disease';
+                checkbox.addEventListener('change', onDiseaseCheckboxChange);
+
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(' ' + disease.replace(/_/g, ' ')));
+                container.appendChild(label);
             });
+
+            // Pre-select 5 diseases
+            container.querySelectorAll('input[type="checkbox"]')
+                .forEach((checkbox, i) => { if (i < 5) checkbox.checked = true; });
+
+            updateDiseasesChart();
         }
 
-        async function loadChart(endpoint, canvasId, labelName, color, xLabel) {
-            const res = await fetch(endpoint);
-            const data = await res.json();
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(d => d.name),
-                    datasets: [{
-                        label: labelName,
-                        data: data.map(d => d.stroke_count),
-                        backgroundColor: color
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Count' }
-                        },
-                        x: {
-                            title: { display: true, text: xLabel }
-                        }
-                    }
-                }
-            });
+        function onDiseaseCheckboxChange() {
+            const checked = document.querySelectorAll('input[name="disease"]:checked');
+            if (checked.length > 5) {
+                this.checked = false;
+                alert('You can select up to 5 diseases at a time.');
+            } else {
+                updateDiseasesChart();
+            }
         }
 
-        async function loadDiseasesChart(group_by, columns) {
-            const url = `/api/Diseases?group_by=${group_by}&columns=${columns.join(',')}`;
+        function getSelectedDiseases() {
+            return Array.from(document.querySelectorAll('input[name="disease"]:checked')).map(cb => cb.value);
+        }
+
+        async function updateDiseasesChart() {
+            const groupBy = document.getElementById('groupBySelector').value;
+            const selectedDiseases = getSelectedDiseases();
+            if (selectedDiseases.length === 0) return;
+
+            const url = `/api/Diseases?group_by=${groupBy}&columns=${selectedDiseases.join(',')}`;
             const response = await fetch(url);
             const data = await response.json();
 
-            if (!Array.isArray(data)) {
-                console.error("Unexpected response format:", data);
-                return;
-            }
 
-            const labels = data.map(row => row.name);
-            const datasets = columns.map((col, i) => ({
+            let labels = data.map(row => row.name);
+
+// Convert true/false to Male/Female if grouping by sex
+            if (groupBy === 'sex') {
+                labels = labels.map(val => val === true ? 'Male' : val === false ? 'Female' : val);
+            }
+            const datasets = selectedDiseases.map((col, i) => ({
                 label: col.replace(/_/g, ' ').toUpperCase(),
                 data: data.map(row => row[col]),
                 backgroundColor: `hsl(${(i * 60) % 360}, 70%, 60%)`
@@ -224,10 +260,10 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: { display: true, text: 'Number of Stroke Cases' }
+                            title: { display: true, text: 'Number of heart attack Cases' }
                         },
                         x: {
-                            title: { display: true, text: group_by.replace(/_/g, ' ').toUpperCase() }
+                            title: { display: true, text: groupBy.replace(/_/g, ' ').toUpperCase() }
                         }
                     }
                 }
@@ -235,26 +271,257 @@
         }
 
         function onGroupByChange() {
-            const groupBy = document.getElementById('groupBySelector').value;
-            const diseases = ['had_skin_cancer', 'had_copd', 'had_depressive_disorder', 'had_kidney_disease'];
-            loadDiseasesChart(groupBy, diseases);
+            updateDiseasesChart();
         }
 
-        function loadAllCharts() {
-            loadChart("/api/groupby?field=age_category_id", "chartAge", "Stroke Count by Age", "#FF8A65", "Age Category");
-            loadChart("/api/groupby?field=sex", "chartSex", "Stroke Count by Sex", "#9575CD", "Sex");
+
+        async function renderAverageChart() {
+    const columns = [
+        'physical_health_days',
+        'mental_health_days',
+        'sleep_hours',
+        'height_in_cm',
+        'weight_in_kilograms',
+        'bmi',
+    ];
+    const groupBy = document.getElementById('averageGroupSelector').value;
+    const statistic = document.getElementById('statisticSelector').value; // Get selected statistic
+
+    let url = `/api/Statistics?columns=${columns.join(',')}&statistic=${statistic}`;
+    if (groupBy) url += `&group_by=${groupBy}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    const ctx = document.getElementById('chartAverage').getContext('2d');
+
+    if (window.averageChartInstance) window.averageChartInstance.destroy();
+    if (groupBy === 'age_category_id') {
+    data.sort((a, b) => {
+        const numA = parseInt(a.name.match(/\d+/)?.[0]);
+        const numB = parseInt(b.name.match(/\d+/)?.[0]);
+        return numA - numB;
+    });
+}
+    if (groupBy) {
+        const labels = data.map(row => row.name);
+        const datasets = columns.map((col, i) => ({
+            label: col.replace(/_/g, ' ').toUpperCase(),
+            data: data.map(row => row[`${statistic}_${col}`]), // Use selected statistic here
+            backgroundColor: `hsl(${(i * 60) % 360}, 70%, 60%)`
+        }));
+
+        window.averageChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                plugins: { tooltip: { mode: 'index', intersect: false }, legend: { position: 'top' } },
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Value' } },
+                    x: { title: { display: true, text: groupBy.replace(/_/g, ' ').toUpperCase() } }
+                }
+            }
+        });
+    } else {
+        const labels = columns.map(col => col.replace(/_/g, ' ').toUpperCase());
+        const values = columns.map(col => data[0][`${statistic}_${col}`]); // Use selected statistic here
+
+        window.averageChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: `${statistic.charAt(0).toUpperCase() + statistic.slice(1)} Value`,
+                    data: values,
+                    backgroundColor: '#26a69a'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Value' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Indicator' }
+                    }
+                }
+            }
+        });
+    }
+}
+
+
+        const pieChartIndicators = [
+            'had_angina', 'had_stroke', 'had_asthma', 'had_skin_cancer', 'had_copd',
+            'had_depressive_disorder', 'had_kidney_disease', 'had_arthritis',
+            'deaf_or_hard_of_hearing', 'blind_or_vision_difficulty',
+            'difficulty_concentrating', 'difficulty_walking',
+            'difficulty_dressing_bathing', 'difficulty_errands', 'chest_scan',
+            'alcohol_drinkers', 'hiv_testing', 'flu_vax_last_12',
+            'pneumo_vax_ever', 'high_risk_last_year'
+        ];
+
+        function createPieChartCheckboxes() {
+            const container = document.getElementById('pieCheckboxes');
+            container.innerHTML = '';
+
+            pieChartIndicators.forEach(indicator => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = indicator;
+        checkbox.name = 'pieIndicator';
+        checkbox.addEventListener('change', onPieCheckboxChange);
+
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + indicator.replace(/_/g, ' ')));
+        container.appendChild(label);
+            });
+
+            // Pre-select first 6
+            container.querySelectorAll('input[type="checkbox"]')
+        .forEach((checkbox, i) => { if (i < 6) checkbox.checked = true; });
+
+            renderPercentilePieChart();
         }
+
+        function onPieCheckboxChange() {
+            const checked = document.querySelectorAll('input[name="pieIndicator"]:checked');
+            if (checked.length > 6) {
+        this.checked = false;
+        alert('You can select up to 6 indicators for the pie chart.');
+            } else {
+        renderPercentilePieChart();
+            }
+        }
+
+        async function renderPercentilePieChart() {
+            const selectedIndicators = Array.from(document.querySelectorAll('input[name="pieIndicator"]:checked'))
+        .map(cb => cb.value);
+
+            if (selectedIndicators.length === 0) return;
+
+            const url = `/api/Statistics?columns=${selectedIndicators.join(',')}&statistic=percentile`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (!data || data.length === 0) return;
+
+            const percentileData = data[0];
+            const labels = selectedIndicators.map(col => col.replace(/_/g, ' ').toUpperCase());
+            const values = selectedIndicators.map(col => percentileData[`percent_${col}`] || 0);
+
+            const ctx = document.getElementById('heartAttackPieChart').getContext('2d');
+            if (window.percentilePieChartInstance) window.percentilePieChartInstance.destroy();
+
+            window.percentilePieChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: labels.map((_, i) =>
+                    `hsl(${(i * 60) % 360}, 70%, 60%)`)
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw.toFixed(2)}%` } }
+            }
+        }
+            });
+        }
+
+        function populateHeartAttackIndicatorChecklist() {
+            const container = document.getElementById('heartAttackIndicatorChecklist');
+            container.innerHTML = ''; // Clear previous content
+
+            pieChartIndicators.forEach(indicator => {
+        const label = document.createElement('label');
+        label.style.marginRight = '1em';  // Horizontal spacing
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = indicator;
+        checkbox.name = 'indicator';
+        checkbox.addEventListener('change', renderHeartAttackRatioChartDynamic);
+
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + indicator.replace(/_/g, ' ').toUpperCase()));
+        container.appendChild(label);
+            });
+
+            // Pre-select the first indicator
+            const firstCheckbox = container.querySelector('input[type="checkbox"]');
+            if (firstCheckbox) firstCheckbox.checked = true;
+
+            renderHeartAttackRatioChartDynamic();
+        }
+
+        async function renderHeartAttackRatioChartDynamic() {
+            const checkboxes = document.querySelectorAll('#heartAttackIndicatorChecklist input[name="indicator"]:checked');
+            const selectedIndicators = Array.from(checkboxes).map(cb => cb.value);
+            if (selectedIndicators.length === 0) return;
+
+            const columnsParam = selectedIndicators.join(',');
+            const url = `/api/Statistics?columns=${columnsParam}&statistic=comorbidity`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (!data || data.length === 0) return;
+
+            const labels = data.map(item => item.had_heart_attack ? 'Had Heart Attack' : 'Did Not Have Heart Attack');
+            const values = data.map(item => item.count);
+
+            const ctx = document.getElementById('heartAttackRatioChart').getContext('2d');
+            if (window.heartAttackRatioChartInstance) window.heartAttackRatioChartInstance.destroy();
+
+            window.heartAttackRatioChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: ['#ef5350', '#66bb6a']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const value = context.raw;
+                            const percent = ((value / total) * 100).toFixed(2);
+                            return `${context.label}: ${value} (${percent}%)`;
+                        }
+                    }
+                }
+            }
+        }
+            });
+        }
+
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderMap();
-            loadAllCharts();
-            loadDiseasesChart('state_id', [
-                'had_skin_cancer',
-                'had_copd',
-                'had_depressive_disorder',
-                'had_kidney_disease'
-            ]);
+
+            createDiseaseCheckboxes();
+            createPieChartCheckboxes();
+            renderAverageChart();
+            renderPercentilePieChart();
+            populateHeartAttackIndicatorChecklist();
         });
     </script>
 </body>
+
 </html>

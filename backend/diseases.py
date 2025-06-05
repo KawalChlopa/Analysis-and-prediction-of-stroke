@@ -2,19 +2,35 @@ import duckdb as dd
 from flask import Flask, jsonify, request
 from persistence import db_location
 
-#
 def diseases(con, columns, group):
     columns = [
         f"SUM(CASE WHEN {col} = TRUE THEN 1 ELSE 0 END) as {col}"
         for col in columns
     ]
     # Start query differently based on group type
-    if group in ['bmi', 'weight_in_kilograms', 'sex']:
+    if group == 'weight_in_kilograms':
         query = f"""
-        SELECT Indicators.{group} as name, {", ".join(columns)}
+        SELECT FLOOR(Indicators.weight_in_kilograms / 5) * 5 AS name, {", ".join(columns)}
         FROM Indicators
         WHERE had_heart_attack = 1
-        GROUP BY Indicators.{group};
+        GROUP BY FLOOR(Indicators.weight_in_kilograms / 5) * 5
+        ORDER BY name;
+        """
+    elif group == 'bmi':
+        query = f"""
+        SELECT FLOOR(Indicators.bmi / 5) * 5 AS name, {", ".join(columns)}
+        FROM Indicators
+        WHERE had_heart_attack = 1
+        GROUP BY FLOOR(Indicators.bmi / 5) * 5
+        ORDER BY name;
+        """
+    elif group == 'sex':
+        query = f"""
+        SELECT Indicators.sex as name, {", ".join(columns)}
+        FROM Indicators
+        WHERE had_heart_attack = 1
+        GROUP BY Indicators.sex
+        ORDER BY Indicators.sex;
         """
     else:
         query = f"""

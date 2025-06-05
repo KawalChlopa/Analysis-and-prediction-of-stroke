@@ -2,7 +2,6 @@ import duckdb as dd
 from flask import Flask, jsonify, request
 from persistence import db_location
 
-
 special_case = {
     'state_id': 'State',
     'age_category_id': 'AgeCategory',
@@ -15,6 +14,7 @@ special_case = {
     'race_ethnicity_category_id': 'RaceEthnicityCategory',
     'removed_teeth_id': 'RemovedTeeth',
 }
+
 
 def average(con, columns, group=None):
     select_clause = ', '.join([f'ROUND(AVG({col}), 2) as average_{col}' for col in columns])
@@ -32,14 +32,14 @@ def average(con, columns, group=None):
         GROUP BY x.name
         """
 
-
-
     print(f"Executing query: {query}")
     result = con.execute(query)
     return result
 
+
 def median(con, columns, group=None):
-    select_clause = ', '.join([f'ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY {col}), 2) as median_{col}' for col in columns])
+    select_clause = ', '.join(
+        [f'ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY {col}), 2) as median_{col}' for col in columns])
     query = f"""
     SELECT {select_clause}
     FROM Indicators
@@ -79,6 +79,7 @@ def standard_deviation(con, columns, group=None):
     result = con.execute(query)
     return result
 
+
 def max_value(con, columns, group=None):
     select_clause = ', '.join([f'MAX({col}) as max_{col}' for col in columns])
     query = f"""
@@ -98,6 +99,7 @@ def max_value(con, columns, group=None):
     print(f"Executing query: {query}")
     result = con.execute(query)
     return result
+
 
 def min_value(con, columns, group=None):
     select_clause = ', '.join([f'MIN({col}) as min_{col}' for col in columns])
@@ -119,8 +121,11 @@ def min_value(con, columns, group=None):
     result = con.execute(query)
     return result
 
+
 def percentile(con, columns, group=None):
-    select_clause = ', '.join([f"ROUND(SUM(CASE WHEN {col} = TRUE THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as percent_{col}" for col in columns])
+    select_clause = ', '.join(
+        [f"ROUND(SUM(CASE WHEN {col} = TRUE THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as percent_{col}" for col in
+         columns])
     query = f"""
     SELECT {select_clause}
     FROM Indicators
@@ -137,11 +142,32 @@ def percentile(con, columns, group=None):
     result = con.execute(query)
     return result
 
+
+def comorbidity(con, columns, group=None):
+    if not columns or len(columns) > 6:
+        raise ValueError("You must provide between 1 and 3 columns for comorbidity analysis")
+
+    # Build the condition: all selected indicators must be TRUE
+    condition = " AND ".join(f"{col} = TRUE" for col in columns)
+
+    query = f"""
+    SELECT 
+        had_heart_attack,
+        COUNT(*) AS count
+    FROM Indicators
+    WHERE {condition}
+    GROUP BY had_heart_attack
+    """
+
+    print(f"Executing query: {query}")
+    result = con.execute(query)
+    return result
+
+
 def total(con, columns, group=None):
     result = con.execute("""
                          SELECT 
                              COUNT(*) as 'total'
                          FROM Indicators
                          """)
-    
     return result
